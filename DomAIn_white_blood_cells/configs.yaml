@@ -1,0 +1,24 @@
+task: classification  # segmentation
+
+# Dataset:
+name: HECKTOR
+root: /l/users/u21010212/cv805/datasets #/l/users/roba.majzoub/hecktor2022 #/l/users/roba.majzoub/hecktor2022 # 
+# center_name: ['CHUP', 'CHUV', 'CHUS', 'CHUM', 'HMR', 'HGJ', 'MDA'] # Available centers are ['CHUP', 'CHUV', 'CHUS', 'CHUM', 'HMR', 'HGJ', 'MDA']
+ds_names: [Raabin-WBC, Matek-19, 'Acevedo-20'] #['CHUV' , 'CHUS', 'CHUM', 'HMR', 'HGJ', 'MDA'] 
+train_size: 0.8
+# Model:
+model_name: biomedclip
+n_classes: 3
+pretrained: False
+
+# training:
+optimizer: SGD
+criterion:  cross_entropy #  DiceLoss
+train_mb: 1
+val_mb: 1
+train_epochs: 1
+device: cuda
+
+
+# CL:
+strategy: 'Naive' # Available strategies: [Joint, Joint, EWC, Replay]
