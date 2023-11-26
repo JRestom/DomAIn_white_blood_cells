@@ -24,6 +24,17 @@ from avalanche.training import JointTraining
 from avalanche.training import EWC
 from avalanche.training import Replay
 
+import argparse
+import timm
+
+# Argument Parsing
+parser = argparse.ArgumentParser(description='Image Classification Training Script')
+parser.add_argument('--architecture', type=str, required=True, help='Model architecture (e.g., "Resnet", "Vit")')
+parser.add_argument('--weights', action='store_true', help='Use pre-trained weights if available')
+parser.add_argument('--strategy', type=str, required=True, help='Training strategy (e.g., "Naive", "Joint", "EWC", "Replay")')
+parser.add_argument('--n_classes', type=int, required=True, help='Number of classes')
+args = parser.parse_args()
+
 #print(torch. __version__ )
 
 #Define data transformations:
@@ -116,21 +127,42 @@ bm = dataset_benchmark(train_datasets=[train_raabin,train_matek,train_acevedo],
 
 
 #------------Toy model-------------------------
-architecture = 'Vit'
-weights=None
-strategy='Naive'
-n_classes = 5 
+# architecture = 'Vit'
+# weights=None
+# strategy='Naive'
+# n_classes = 5 
 
-if architecture=='Resnet':
-    model = resnet50(weights=weights)
+architecture = args.architecture
+use_pretrained_weights = args.weights
+strategy = args.strategy
+n_classes = args.n_classes
+
+# if architecture=='Resnet':
+#     model = resnet50(weights=weights)
+#     model.fc = nn.Linear(model.fc.weight.shape[1], n_classes)
+#     print(model)
+
+# elif architecture=='Vit':
+#     model = vit_b_16(weights=weights)
+#     print(model)
+#     model.heads.head = nn.Linear(model.heads.head.weight.shape[1], n_classes)
+#     print(model)
+
+if architecture == 'Resnet':
+    if use_pretrained_weights:
+        model = resnet50(weights=ResNet50_Weights)
+        print('Weights loaded')
+    else:
+        model = resnet50(weights=None)
     model.fc = nn.Linear(model.fc.weight.shape[1], n_classes)
-    print(model)
 
-elif architecture=='Vit':
-    model = vit_b_16(weights=weights)
-    print(model)
+elif architecture == 'Vit':
+    if use_pretrained_weights:
+        model = vit_b_16(weights=ViT_B_16_Weights)
+        print('Weights loaded')
+    else:
+        model = vit_b_16(weights=None)
     model.heads.head = nn.Linear(model.heads.head.weight.shape[1], n_classes)
-    print(model)
 
 
 optimizer = SGD(model.parameters(), lr=0.001, momentum=0.9)
