@@ -25,13 +25,14 @@ from avalanche.training import EWC
 from avalanche.training import Replay
 
 import argparse
-import timm
+from models import biomed_class
 
 # Argument Parsing
 parser = argparse.ArgumentParser(description='Image Classification Training Script')
 parser.add_argument('--architecture', type=str, required=True, help='Model architecture (e.g., "Resnet", "Vit")')
 parser.add_argument('--weights', action='store_true', help='Use pre-trained weights if available')
 parser.add_argument('--strategy', type=str, required=True, help='Training strategy (e.g., "Naive", "Joint", "EWC", "Replay")')
+parser.add_argument('--epochs', type=int, required=True, help='Number of epochs')
 parser.add_argument('--n_classes', type=int, required=True, help='Number of classes')
 args = parser.parse_args()
 
@@ -136,6 +137,9 @@ architecture = args.architecture
 use_pretrained_weights = args.weights
 strategy = args.strategy
 n_classes = args.n_classes
+epochs = args.epochs
+
+assert architecture in ['Resnet', 'Vit', 'Biomed_clip'], 'Architecture not supported'
 
 # if architecture=='Resnet':
 #     model = resnet50(weights=weights)
@@ -164,21 +168,24 @@ elif architecture == 'Vit':
         model = vit_b_16(weights=None)
     model.heads.head = nn.Linear(model.heads.head.weight.shape[1], n_classes)
 
+elif architecture == 'Biomed_clip':
+    model = biomed_class(n_classes)
+    # print(model)
 
 optimizer = SGD(model.parameters(), lr=0.001, momentum=0.9)
 criterion = CrossEntropyLoss()
 
 if strategy=='Naive':
-    cl_strategy = Naive(model, optimizer, criterion,train_mb_size=32, train_epochs=1, eval_mb_size=32, device='cuda')
+    cl_strategy = Naive(model, optimizer, criterion,train_mb_size=32, train_epochs=epochs, eval_mb_size=32, device='cuda')
 
 elif strategy=='Joint':
-    cl_strategy = JointTraining(model,optimizer,criterion,train_mb_size=32,train_epochs=1,eval_mb_size=32,device='cuda')
+    cl_strategy = JointTraining(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device='cuda')
 
 elif strategy=='EWC':
-    cl_strategy = EWC(model,optimizer,criterion,train_mb_size=32,train_epochs=1,eval_mb_size=32,device='cuda', ewc_lambda=1.0e-1)
+    cl_strategy = EWC(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device='cuda', ewc_lambda=1.0e-1)
 
 elif strategy=='Replay':
-    cl_strategy = Replay(model,optimizer,criterion,train_mb_size=32,train_epochs=1,eval_mb_size=32,device='cuda', mem_size=50)
+    cl_strategy = Replay(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device='cuda', mem_size=50)
 
 
 
@@ -215,7 +222,7 @@ else:
 
 #----------------Saving the results-------------------------------
 # Define a file to write the results
-file_name = f"{strategy}_ViT.txt"
+file_name = f"{strategy}_{architecture}_{str(epochs)}_epochs.txt"
 # Open the file in write mode and write the results
 with open(file_name, "w") as file:
     for dic in results:
