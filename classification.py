@@ -105,7 +105,7 @@ if architecture == 'Resnet':
 
 elif architecture == 'Vit':
     if use_pretrained_weights:
-        model = vit_b_16(weights=ViT_B_16_Weights)
+        model = vit_b_16(weights=ViT_B_16_Weights.DEFAULT)
         print('Weights loaded')
     else:
         model = vit_b_16(weights=None)
