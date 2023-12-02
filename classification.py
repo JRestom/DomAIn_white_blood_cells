@@ -22,7 +22,6 @@ from avalanche.training.supervised import (
     LwF,
     GenerativeReplay
 )
-from avalanche.training.supervised.icarl import ICaRL
 from avalanche.training.supervised.cumulative import Cumulative
 
 import argparse
