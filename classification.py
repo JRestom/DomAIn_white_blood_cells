@@ -48,7 +48,7 @@ epochs = args.epochs
 save_dir = args.save_dir
 
 assert architecture in ['Resnet', 'Vit', 'Biomed_clip'], 'Architecture not supported'
-assert strategy in ['Naive', 'Joint', 'EWC', 'Replay', 'SynapticIntelligence', 'LwF'], 'Strategy not supported'
+assert strategy in ['Naive', 'Joint', 'Cumulative', 'EWC', 'Replay', 'SynapticIntelligence', 'LwF'], 'Strategy not supported'
 assert os.path.exists(save_dir), 'Save dir does not exist'
 
 #--------------Data transformations----------------------------
@@ -126,6 +126,9 @@ if strategy=='Naive':
 
 elif strategy=='Joint':
     cl_strategy = JointTraining(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device)
+
+elif strategy=='Cumulative':
+    cl_strategy = Cumulative(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device)
 
 elif strategy=='EWC':
     cl_strategy = EWC(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, ewc_lambda=1.0e-1)
