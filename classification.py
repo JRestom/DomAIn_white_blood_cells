@@ -1,29 +1,25 @@
 import torch
-import torchvision
 import torchvision.transforms as transforms
 from torchvision.datasets import DatasetFolder
 from PIL import Image
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from avalanche.benchmarks.utils import make_avalanche_dataset
 import numpy as np
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import random_split
 
 from torch.nn import CrossEntropyLoss
 from avalanche.benchmarks.generators import dataset_benchmark
-from avalanche.models import SimpleMLP
-from avalanche.models import SimpleCNN
 from torch.optim import SGD
-from avalanche.training import Naive
-from tqdm import tqdm
+
 from torchvision.models import resnet50, ResNet50_Weights
-from torchvision.models import densenet121, DenseNet121_Weights
 from torchvision.models import vit_b_16, ViT_B_16_Weights
 import torch.nn as nn
 
-from avalanche.training import JointTraining
-from avalanche.training import EWC
-from avalanche.training import Replay
+from avalanche.training.supervised import (
+    Naive,
+    Replay,
+    EWC,
+    JointTraining,
+    SynapticIntelligence
+)
 
 import argparse
 from models import biomed_class
@@ -47,10 +43,9 @@ n_classes = args.n_classes
 epochs = args.epochs
 save_dir = args.save_dir
 
-assert architecture in ['Resnet', 'Densenet', 'Vit', 'Biomed_clip'], 'Architecture not supported'
-assert strategy in ['Naive', 'Joint', 'EWC', 'Replay'], 'Strategy not supported'
+assert architecture in ['Resnet', 'Vit', 'Biomed_clip'], 'Architecture not supported'
+assert strategy in ['Naive', 'Joint', 'EWC', 'Replay', 'SynapticIntelligence'], 'Strategy not supported'
 assert os.path.exists(save_dir), 'Save dir does not exist'
-
 
 #--------------Data transformations----------------------------
 data_transforms = transforms.Compose([
@@ -59,13 +54,16 @@ data_transforms = transforms.Compose([
     #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize the pixel values
 ])
 
+
 #--------------Custom loader----------------------------
 def custom_loader(image_path):
     with open(image_path, 'rb') as f:
         return Image.open(f).convert('RGB')
 
+
 #--------------File extensions ----------------------------
 extensions = ('.png')
+
 
 #--------------Create datasets----------------------------
 dataset_raabin = DatasetFolder(root='/l/users/u21010212/cv805/datasets/Raabin-WBC/Train_Norm', extensions=extensions,transform=data_transforms, loader=custom_loader)
@@ -77,8 +75,6 @@ dataset_acevedo = DatasetFolder(root='/l/users/u21010212/cv805/datasets/Acevedo-
 def split_dataset(dataset):
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
-
-    # Use random_split to create the training and testing subsets
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
     return train_dataset, test_dataset
 
@@ -92,8 +88,7 @@ train_acevedo, test_acevedo = split_dataset(dataset_acevedo)
 #--------------Create benchmarks---------------------------------
 bm = dataset_benchmark(train_datasets=[train_raabin,train_matek,train_acevedo],
     test_datasets=[test_raabin, test_matek, test_acevedo],
-    
-)
+    )
 
 
 # --------------Model and Training Strategy Definition----------------------
@@ -103,14 +98,6 @@ if architecture == 'Resnet':
         print('Weights loaded')
     else:
         model = resnet50(weights=None)
-    model.fc = nn.Linear(model.fc.weight.shape[1], n_classes)
-
-elif architecture == 'Denset':
-    if use_pretrained_weights:
-        model = densenet121(weights=DenseNet121_Weights.DEFAULT)
-        print('Weights loaded')
-    else:
-        model = densenet121(weights=None)
     model.fc = nn.Linear(model.fc.weight.shape[1], n_classes)
 
 elif architecture == 'Vit':
@@ -141,6 +128,9 @@ elif strategy=='EWC':
 
 elif strategy=='Replay':
     cl_strategy = Replay(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, mem_size=50)
+
+elif strategy=='SynapticIntelligence':
+    cl_strategy = SynapticIntelligence(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, si_lambda=1.0e-3)
 
 
 #----------------------- TRAINING LOOP-------------------------
@@ -181,6 +171,7 @@ else:
 
         print('Computing test accuracy on all datasets ')
         results.append(cl_strategy.eval(bm.test_stream)) 
+
 
 #----------------Saving the results-------------------------------
 file_name = f"{strategy}_{architecture}_{str(epochs)}_epochs.txt"
