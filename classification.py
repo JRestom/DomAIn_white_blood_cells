@@ -20,7 +20,7 @@ from avalanche.training.supervised import (
     JointTraining,
     SynapticIntelligence,
     LwF,
-    GDumb
+    GenerativeReplay
 )
 from avalanche.training.supervised.icarl import ICaRL
 from avalanche.training.supervised.cumulative import Cumulative
@@ -48,7 +48,7 @@ epochs = args.epochs
 save_dir = args.save_dir
 
 assert architecture in ['Resnet', 'Vit', 'Biomed_clip'], 'Architecture not supported'
-assert strategy in ['Naive', 'Joint', 'Cumulative', 'EWC', 'Replay', 'SynapticIntelligence', 'LwF'], 'Strategy not supported'
+assert strategy in ['Naive', 'Joint', 'Cumulative', 'EWC', 'Replay', 'SynapticIntelligence', 'LwF', 'GenerativeReplay'], 'Strategy not supported'
 assert os.path.exists(save_dir), 'Save dir does not exist'
 
 #--------------Data transformations----------------------------
@@ -136,11 +136,16 @@ elif strategy=='EWC':
 elif strategy=='LwF':
     cl_strategy = LwF(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, alpha=0.5, temperature=2.0)
 
+elif strategy=='SynapticIntelligence':
+    cl_strategy = SynapticIntelligence(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, si_lambda=1.0e-3)
+
 elif strategy=='Replay':
     cl_strategy = Replay(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, mem_size=50)
 
-elif strategy=='SynapticIntelligence':
-    cl_strategy = SynapticIntelligence(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, si_lambda=1.0e-3)
+elif strategy=='GenerativeReplay':
+    cl_strategy = GenerativeReplay(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device)
+
+
 
 
 #----------------------- TRAINING LOOP-------------------------
