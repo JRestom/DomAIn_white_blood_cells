@@ -18,8 +18,12 @@ from avalanche.training.supervised import (
     Replay,
     EWC,
     JointTraining,
-    SynapticIntelligence
+    SynapticIntelligence,
+    LwF,
+    GDumb
 )
+from avalanche.training.supervised.icarl import ICaRL
+from avalanche.training.supervised.cumulative import Cumulative
 
 import argparse
 from models import biomed_class
@@ -44,7 +48,7 @@ epochs = args.epochs
 save_dir = args.save_dir
 
 assert architecture in ['Resnet', 'Vit', 'Biomed_clip'], 'Architecture not supported'
-assert strategy in ['Naive', 'Joint', 'EWC', 'Replay', 'SynapticIntelligence'], 'Strategy not supported'
+assert strategy in ['Naive', 'Joint', 'EWC', 'Replay', 'SynapticIntelligence', 'LwF'], 'Strategy not supported'
 assert os.path.exists(save_dir), 'Save dir does not exist'
 
 #--------------Data transformations----------------------------
@@ -125,6 +129,9 @@ elif strategy=='Joint':
 
 elif strategy=='EWC':
     cl_strategy = EWC(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, ewc_lambda=1.0e-1)
+
+elif strategy=='LwF':
+    cl_strategy = LwF(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, alpha=0.5, temperature=2.0)
 
 elif strategy=='Replay':
     cl_strategy = Replay(model,optimizer,criterion,train_mb_size=32,train_epochs=epochs,eval_mb_size=32,device=device, mem_size=50)
