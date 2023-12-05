@@ -2,7 +2,7 @@
 
 ## Creating the environment
 ```sh
-conda env create -f segmentation/environment.yml
+conda env create -f segmentation/environment_droplet.yml
 ```
 ## Running segmentation experiments
 Determine the model, training strategy and other configurations in segmentation/configs.yaml. To train the segmentation model:
