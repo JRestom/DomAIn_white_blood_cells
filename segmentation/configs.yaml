@@ -1,0 +1,22 @@
+task: segmentation  # segmentation
+
+# Dataset:
+name: HECKTOR
+root: /nfs-stor/users/roba.majzoub/hecktor2022 
+ds_names: ['CHUV' , 'CHUS', 'CHUM', 'HMR', 'HGJ', 'MDA'] 
+
+# Model:
+model_name: unet
+n_classes: 3
+
+# training:
+optimizer: SGD
+criterion: DiceLoss
+train_mb: 1
+val_mb: 1
+train_epochs: 200
+device: cuda
+
+
+# CL:
+strategy: 'Cumulative' # Available strategies: [Naive, Joint, EWC, Replay, Cumulative, LwF]
